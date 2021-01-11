@@ -2,10 +2,12 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
+import { HttpClientModule } from "@angular/common/http";
 
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login.component';
 import { RegisterComponent } from './components/register.component';
+import { WebService } from './web.services';
 
 const ROUTES: Routes = [
   { path: "", component: LoginComponent },
@@ -24,9 +26,12 @@ const ROUTES: Routes = [
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterModule.forRoot(ROUTES, { useHash: true })
+    RouterModule.forRoot(ROUTES, { useHash: true }),
+    HttpClientModule
   ],
-  providers: [],
+  providers: [
+    WebService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
