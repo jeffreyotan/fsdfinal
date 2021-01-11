@@ -1,0 +1,31 @@
+<div class="row">
+    <div class="col">
+        <p class="m-3">Welcome to Quick Journal, where you can record you thoughts easily and recall them hassle-free.</p>
+        <p class="m-3">To begin, kindly login.. (if you do not have an account, please <a [routerLink]="['/register']">click here</a>)</p>
+    </div>
+</div>
+<form class="m-3" [formGroup]="form">
+    <div class="row">
+        <div class="col-2">
+            <label for="username">Username:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="username" size="50" formControlName="username">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="password">Password:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="password" size="50" formControlName="password">
+        </div>
+    </div>
+    <p></p>
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col">
+            <button type="button" class="btn btn-primary" [disabled]="form.invalid" (click)="onClickSubmit()">Submit</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,38 @@
+<div class="row">
+    <div class="col">
+        <h4 class="m-3">Creating a new user</h4>
+    </div>
+</div>
+<form class="m-3" [formGroup]="form">
+    <div class="row">
+        <div class="col-2">
+            <label for="email">Email:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="email" size="50" formControlName="email">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="username">Username:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="username" size="50" formControlName="username">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="password">Password:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="password" size="50" formControlName="password">
+        </div>
+    </div>
+    <p></p>
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col">
+            <button type="button" class="btn btn-primary" (click)="onClickSubmit()">Submit</button>
+        </div>
+    </div>
+</form>
