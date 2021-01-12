@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { WebService } from '../web.services';
 
 @Component({
   selector: 'app-register',
@@ -10,7 +11,7 @@ export class RegisterComponent implements OnInit {
 
   form: FormGroup;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private webSvc: WebService) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -21,7 +22,12 @@ export class RegisterComponent implements OnInit {
   }
 
   onClickSubmit(): void {
-    console.info(`-> Clicked submit with form values:`, this.form.value);
+    // console.info(`-> Clicked submit with form values:`, this.form.value);
+    this.webSvc.registerUser(
+      this.form.get('email').value,
+      this.form.get('username').value,
+      this.form.get('password').value
+    );
   }
 
 }

@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 
+const nodemailer = require('nodemailer');
+
 // Passport core
 const passport = require('passport');
 // Passport strategy
@@ -18,7 +20,7 @@ const pool = mysql.createPool({
     port: parseInt(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PW,
-    database: process.env.DB_NAME || 'paf2020',
+    database: process.env.DB_NAME || 'fsdfinal',
     connectionLimit: parseInt(process.env.DB_CONN_LIMIT) || 4,
     timezone: '+08:00'
 });
@@ -164,6 +166,12 @@ app.get('/protected/secret', (req, res, next) => {
 }, (req, res, next) => {
     res.status(200).contentType('application/json').json({ meaning_of_life: 42 });
 }); */
+
+app.post('/newuser', (req, res, next) => {
+    const newUserData = req.body;
+    console.info('=> Inside register: ', newUserData);
+    res.status(200).contentType('application/json').json({ message: "success" });
+});
 
 // start the express server
 startApp(app, pool);

@@ -11,7 +11,7 @@ import { WebService } from './web.services';
 
 const ROUTES: Routes = [
   { path: "", component: LoginComponent },
-  { path: "login", component: LoginComponent },
+  { path: "main", component: LoginComponent },
   { path: "register", component: RegisterComponent },
   { path: "**", redirectTo: "/", pathMatch: "full"}
 ];
