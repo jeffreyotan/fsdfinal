@@ -11,6 +11,8 @@ export class RegisterComponent implements OnInit {
 
   form: FormGroup;
 
+  serverMsg: string;
+
   constructor(private fb: FormBuilder, private webSvc: WebService) { }
 
   ngOnInit(): void {
@@ -19,15 +21,21 @@ export class RegisterComponent implements OnInit {
       username: this.fb.control('', [ Validators.required ]),
       password: this.fb.control('', [ Validators.required ])
     });
+    this.serverMsg = "";
   }
 
   onClickSubmit(): void {
     // console.info(`-> Clicked submit with form values:`, this.form.value);
-    this.webSvc.registerUser(
+    const serverReply = this.webSvc.registerUser(
       this.form.get('email').value,
       this.form.get('username').value,
       this.form.get('password').value
     );
+    serverReply.then(msg => {
+      this.serverMsg = msg;
+    }).catch(e => {
+      console.error('-> Error from server: ', e);
+    });
   }
 
 }
