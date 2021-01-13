@@ -8,11 +8,15 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login.component';
 import { RegisterComponent } from './components/register.component';
 import { WebService } from './web.services';
+import { ErrorComponent } from './components/error.component';
+import { MainComponent } from './components/main.component';
 
 const ROUTES: Routes = [
   { path: "", component: LoginComponent },
-  { path: "main", component: LoginComponent },
+  { path: "login", component: LoginComponent },
+  { path: "error", component: ErrorComponent },
   { path: "register", component: RegisterComponent },
+  { path: "main", component: MainComponent, canActivate: [WebService] },
   { path: "**", redirectTo: "/", pathMatch: "full"}
 ];
 
@@ -20,7 +24,9 @@ const ROUTES: Routes = [
   declarations: [
     AppComponent,
     LoginComponent,
-    RegisterComponent
+    RegisterComponent,
+    ErrorComponent,
+    MainComponent
   ],
   imports: [
     BrowserModule,

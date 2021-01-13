@@ -4,6 +4,13 @@ const morgan = require('morgan');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 
+// libraries for mongodb
+const ObjectId = require('mongodb').ObjectId;
+const MongoClient = require('mongodb').MongoClient;
+const Timestamp = require('mongodb').Timestamp;
+const MONGO_URL = process.env.MONGO_URL || "mongodb://localhost:27017";
+
+// libraries that are need for emailing and OAuth2
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
@@ -16,7 +23,7 @@ const LocalStrategy = require('passport-local').Strategy;
 // configure PORT
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000;
 
-// configure database
+// configure databases
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 3306,
@@ -42,17 +49,25 @@ const makeQuery = (sql, dbPool) => {
     });
 };
 
-// SQL_QUERY_USER_INFO = "select username from users where email = ? and password = sha1(?)";
+SQL_QUERY_USER_INFO = "select username from users where username = ? and password = sha1(?)";
 SQL_QUERY_NEW_USER_ADD = "insert into users(email, username, password, hash) values(?, ?, sha1(?), sha1(?))";
 SQL_QUERY_GET_HASH = "select hash from users where email = ?";
 SQL_QUERY_GET_USER_ID_FROM_HASH = "select user_id from users where hash like ?";
 SQL_QUERY_SET_USER_VERIFIED = "update users set is_verified = TRUE, hash = NULL where user_id = ?";
 
-// const queryUser = makeQuery(SQL_QUERY_USER_INFO, pool);
+const queryUser = makeQuery(SQL_QUERY_USER_INFO, pool);
 const addNewUser = makeQuery(SQL_QUERY_NEW_USER_ADD, pool);
 const getUserHash = makeQuery(SQL_QUERY_GET_HASH, pool);
 const getUserIDFromHash = makeQuery(SQL_QUERY_GET_USER_ID_FROM_HASH, pool);
 const setUserVerified = makeQuery(SQL_QUERY_SET_USER_VERIFIED, pool);
+
+// create an instance of the mongodb client and define database-specific constants
+const mongoClient = new MongoClient(MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+const MONGO_DB_NAME = 'fsdfinal';
+const MONGO_COLLECTION_NAME = ''
 
 const TOKEN_SECRET = process.env.SECRET || "secret";
 
@@ -61,12 +76,15 @@ const startApp = async (newApp, newPool) => {
     try {
         const conn = await newPool.getConnection();
 
-        console.info('We are pinging the database..');
+        console.info('We are pinging the MySQL database..');
         await conn.ping();
 
         // at this point, if an error occurred, the error will be thrown and caught in the catch segment.
         // Otherwise, it is safe to assume that the connection was successful.
         conn.release();
+
+        console.info('We are connecting to the MongoDB..');
+        await mongoClient.connect();
 
         newApp.listen(PORT, () => {
             console.info(`Server start at port ${PORT} on ${new Date()}`);
@@ -107,7 +125,7 @@ const makeAuth = (newPassport) => {
     return (req, res, next) => {
         newPassport.authenticate('local',
             (err, user, info) => {
-                if((err != null) || !user) {
+                if((err != null) || (!user)) {
                     res.status(401).contentType('application/json').json({ error: err });
                     return;
                 }
@@ -186,13 +204,13 @@ app.post('/login', localStrategyAuth, (req, res, next) => {
         iss: 'quickjournal',
         iat: currTime / 1000,
         // nbf: (currTime / 1000) + 15, // can only be used 15 seconds later
-        exp: (currTime / 1000) + 30, // for the token to expire 30 seconds later
+        exp: (currTime / 1000) + 3*60*60, // for the token to expire 3 hours later
         data: {
             loginTime: req.user.loginTime
         }
     }, TOKEN_SECRET);
 
-    res.status(200).contentType('application/json').json({ message: `Login at ${new Date()}` ,token: token });
+    res.status(200).contentType('application/json').json({ message: `Login at ${new Date()}`, token: token, token_type: 'Bearer' });
 });
 
 /* sample protected route.. for reference
@@ -237,7 +255,7 @@ app.post('/newuser', async (req, res, next) => {
             const sender = OAuth2User;
             const recipient = newUserData.email;
             const title = "[Quick Journal] Please verify your email";
-            const body = `<p>Dear ${newUserData.username}, please kindly verify your email with query param ${hashResult[0].hash}. Thank you!</p>`;
+            const body = `<p>Dear ${newUserData.username}, please kindly verify your email with verification code <strong>${hashResult[0].hash}</strong>. Thank you!</p>`;
             try {
                 const emailResult = await sendEMail(sender, recipient, title, body);
                 console.info('=> Email sent with message: ', emailResult);
@@ -254,8 +272,8 @@ app.post('/newuser', async (req, res, next) => {
     }
 });
 
-app.get('/verify', async (req, res, next) => {
-    const hashVal = req.query['hash'];
+app.post('/verify', async (req, res, next) => {
+    const hashVal = req.body['hash'];
     console.info('=> hashVal: ', hashVal);
     if(hashVal != null) {
         let result = await getUserIDFromHash([ hashVal ]);
@@ -274,8 +292,9 @@ app.get('/verify', async (req, res, next) => {
         } else {
             res.status(500).contentType('application/json').json({ error: "An invalid hash was provided. Please try again with a valid hash." });
         }
+    } else {
+        res.status(500).contentType('application/json').json({ message: "A hash is require to verify a user. Please try again." });
     }
-    res.status(500).contentType('application/json').json({ message: "A hash is require to verify a user. Please try again." });
 });
 
 // start the express server

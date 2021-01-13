@@ -1,0 +1,65 @@
+<form class="m-3" [formGroup]="mainForm" *ngIf="isFirstTime">
+    <div class="row">
+        <div class="col-4">
+            <label for="income">How much do you earn?</label>
+        </div>
+        <div class="col">
+            <span>$</span>
+            <input type="text" id="income" size="20" formControlName="income" #baseIncome>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col">
+            <h5>Allocation:</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <label for="save">Save</label>
+        </div>
+        <div class="col">
+            <input type="text" id="save" size="10" formControlName="save" #saveAmt>
+            <span>%</span>
+            &nbsp;|&nbsp;
+            <span>{{ (baseIncome.value*saveAmt.value/100).toFixed(2) }}</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <label for="spend">Spend</label>
+        </div>
+        <div class="col">
+            <input type="text" id="spend" size="10" formControlName="spend" #spendAmt>
+            <span>%</span>
+            &nbsp;|&nbsp;
+            <span>{{ (baseIncome.value*spendAmt.value/100).toFixed(2) }}</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <label for="donate">Donate</label>
+        </div>
+        <div class="col">
+            <input type="text" id="donate" size="10" formControlName="donate" #donateAmt>
+            <span>%</span>
+            &nbsp;|&nbsp;
+            <span>{{ (baseIncome.value*donateAmt.value/100).toFixed(2) }}</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <label for="invest">Invest</label>
+        </div>
+        <div class="col">
+            <input type="text" id="Invest" size="10" formControlName="invest" #investAmt>
+            <span>%</span>
+            &nbsp;|&nbsp;
+            <span>{{ (baseIncome.value*investAmt.value/100).toFixed(2) }}</span>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col">
+            <button type="button" class="btn btn-primary" [disabled]="mainForm.invalid">Submit</button>
+        </div>
+    </div>
+</form>

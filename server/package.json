@@ -4,7 +4,8 @@
   "description": "A backend server that does authentication and serve information",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js"
   },
   "author": "Jeffrey Tan",
   "license": "ISC",
@@ -12,10 +13,14 @@
     "express": "^4.17.1",
     "googleapis": "^67.0.0",
     "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.6.3",
     "morgan": "^1.10.0",
     "mysql2": "^2.2.5",
     "nodemailer": "^6.4.17",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0"
+  },
+  "engines": {
+    "node": "15.x"
   }
 }

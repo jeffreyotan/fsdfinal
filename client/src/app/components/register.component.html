@@ -32,14 +32,30 @@
     <div class="row">
         <div class="col-2"></div>
         <div class="col">
-            <button type="button" class="btn btn-primary" (click)="onClickSubmit()">Submit</button>
+            <button type="button" class="btn btn-primary" [disabled]="form.invalid" (click)="onClickSubmit()">Submit</button>
             &nbsp;|&nbsp;
             <button type="button" class="btn btn-primary" [routerLink]="['/']">Back</button>
         </div>
     </div>
-    <div class="row my-5">
+</form>
+<form class="m-3" [formGroup]="verifyForm">
+    <div class="row mt-5 my-2">
         <div class="col">
             <h5>{{serverMsg}}</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="code">Verify Code:</label>
+        </div>
+        <div class="col">
+            <input type="text" id="code" size="50" formControlName="code">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col">
+            <button type="button" class="btn btn-primary" [disabled]="!canVerify()" (click)="onClickVerify()">Verify</button>
         </div>
     </div>
 </form>
