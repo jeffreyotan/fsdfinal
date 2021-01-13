@@ -1,15 +1,17 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from "@angular/router";
-import { UserRegistrationData } from "./models";
+import { UserRegistrationData, UserProfileData } from "./models";
 
 @Injectable()
 export class WebService implements CanActivate {
     registerUrl: string = '/newuser';
     verifyUrl: string = '/verify';
     loginUrl: string = '/login';
+    createProfileUrl: string = '/createprofile';
 
     private token = '';
+    private isFirstUse = true;
 
     constructor(private http: HttpClient, private router: Router) { }
 
@@ -72,6 +74,35 @@ export class WebService implements CanActivate {
 
     isLogin() {
         return this.token != '';
+    }
+
+    logout() {
+        this.token = '';
+    }
+
+    createUserProfile(userData: UserProfileData) {
+        this.isFirstUse = true;
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Authorization': 'Bearer ' + this.token,
+                'Content-Type': 'application/json'
+            })
+        };
+        return this.http.post<any>(this.createProfileUrl, userData, httpOptions).toPromise()
+            .then(res => {
+                console.info('-> res: ', res);
+                if(res.status === 200) {
+                    this.isFirstUse = false;
+                }
+                return true;
+            })
+            .catch(e => {
+                console.error('-> error: ', e);
+                if(e.status != 200) {
+                    // handle error
+                }
+                return false;
+            });
     }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {

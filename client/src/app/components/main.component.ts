@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { WebService } from '../web.services';
 
 @Component({
   selector: 'app-main',
@@ -12,7 +13,7 @@ export class MainComponent implements OnInit {
 
   isFirstTime: boolean;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private webSvc: WebService) { }
 
   ngOnInit(): void {
     this.mainForm = this.fb.group({
@@ -25,8 +26,23 @@ export class MainComponent implements OnInit {
     this.isFirstTime = true;
   }
 
-  onClickSubmit() {
-    console.info(`-> Main submit button was clicked`);
+  onClickSubmit(): void {
+    console.info('-> mainForm values: ', this.mainForm.value);
+    this.isFirstTime = true;
+    this.webSvc.createUserProfile({
+      income: parseFloat(this.mainForm.get('income').value),
+      save: parseFloat(this.mainForm.get('save').value),
+      spend: parseFloat(this.mainForm.get('spend').value),
+      donate: parseFloat(this.mainForm.get('donate').value),
+      invest: parseFloat(this.mainForm.get('invest').value)
+    })
+    .then(result => {
+      console.info('-> Create User Profile is successful!.. setting isFirstTime to false');
+      this.isFirstTime = !result;
+    })
+    .catch(e => {
+      console.error('-> Create User Profile failed with error ', e);
+    });
   }
 
 }

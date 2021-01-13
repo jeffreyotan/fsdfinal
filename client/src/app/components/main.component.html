@@ -59,7 +59,7 @@
     </div>
     <div class="row mt-2">
         <div class="col">
-            <button type="button" class="btn btn-primary" [disabled]="mainForm.invalid">Submit</button>
+            <button type="button" class="btn btn-primary" [disabled]="mainForm.invalid" (click)="onClickSubmit()">Submit</button>
         </div>
     </div>
 </form>

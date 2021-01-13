@@ -67,7 +67,20 @@ const mongoClient = new MongoClient(MONGO_URL, {
     useUnifiedTopology: true
 });
 const MONGO_DB_NAME = 'fsdfinal';
-const MONGO_COLLECTION_NAME = ''
+const MONGO_COLLECTION_NAME = 'users';
+
+const makeUserProfileData = (userdata) => {
+    return {
+        username: userdata.username,
+        profile: {
+            income: userdata.income,
+            save: userdata.save,
+            spend: userdata.spend,
+            donate: userdata.donate,
+            invest: userdata.invest
+        }
+    }
+}
 
 const TOKEN_SECRET = process.env.SECRET || "secret";
 
@@ -213,8 +226,7 @@ app.post('/login', localStrategyAuth, (req, res, next) => {
     res.status(200).contentType('application/json').json({ message: `Login at ${new Date()}`, token: token, token_type: 'Bearer' });
 });
 
-/* sample protected route.. for reference
-app.get('/protected/secret', (req, res, next) => {
+app.post('/createprofile', (req, res, next) => {
     // check if the request has Authorization header
     const auth = req.get('Authorization');
     if (auth == null) {
@@ -237,8 +249,21 @@ app.get('/protected/secret', (req, res, next) => {
         res.status(403).contentType('application/json').json({ message: "Incorrect token", error: e});
     }
 }, (req, res, next) => {
-    res.status(200).contentType('application/json').json({ meaning_of_life: 42 });
-}); */
+    const userData = req.body;
+    userData.username = req.token.sub;
+    console.info('=> userData: ', userData);
+    const doc = makeUserProfileData(userData);
+    mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
+        .insertOne(doc)
+        .then(result => {
+            console.info('=> Successfully uploaded to mongo');
+            res.status(200).contentType('application/json').json({ message: 'User profile created' });
+        })
+        .catch(e => {
+            console.error('=> Error while updating mongo: ', e);
+            res.status(500).contentType('application/json').json({ error: 'Failed while uploading to mongo' });
+        });
+});
 
 app.post('/newuser', async (req, res, next) => {
     const newUserData = req.body;
