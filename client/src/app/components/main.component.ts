@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UserProfileData } from '../models';
 import { WebService } from '../web.services';
 
 @Component({
@@ -24,6 +25,24 @@ export class MainComponent implements OnInit {
       invest: this.fb.control('10', [ Validators.required ])
     });
     this.isFirstTime = true;
+    this.retrievePastTransactions()
+  }
+
+  retrievePastTransactions() {
+    this.webSvc.retrieveTransactions()
+      .then(results => {
+        const data = results['data'];
+        console.info('-> Transactions received: ', data);
+        console.info('-> Peeking at data.username: ', data.username);
+        if(data["username"] != null) {
+          // we have a user profile as an empty object will be returned for a new user
+          const userProfile: UserProfileData = data["profile"];
+          console.info('-> userProfile: ', userProfile);
+        }
+      })
+      .catch(e => {
+        console.error('-> Error in retrieving transactions');
+      });
   }
 
   onClickSubmit(): void {
@@ -39,6 +58,7 @@ export class MainComponent implements OnInit {
     .then(result => {
       console.info('-> Create User Profile is successful!.. setting isFirstTime to false');
       this.isFirstTime = !result;
+      this.retrievePastTransactions();
     })
     .catch(e => {
       console.error('-> Create User Profile failed with error ', e);

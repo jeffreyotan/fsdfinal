@@ -3,6 +3,7 @@ const express = require('express');
 const morgan = require('morgan');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const expressWS = require('express-ws');
 
 // libraries for mongodb
 const ObjectId = require('mongodb').ObjectId;
@@ -20,8 +21,10 @@ const passport = require('passport');
 // Passport strategy
 const LocalStrategy = require('passport-local').Strategy;
 
-// configure PORT
+// configure PORT and other globals
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000;
+
+const WSCONN = {}; // a record of all web sockets connected to this server
 
 // configure databases
 const pool = mysql.createPool({
@@ -196,8 +199,9 @@ const sendEMail = (from, to, subject, body) => {
     return newPromise;
 };
 
-// create an instance of the express server
+// create an instance of the express server and web socket
 const app = express();
+const appWS = expressWS(app);
 
 // define middleware and routes
 app.use(morgan('combined'));
@@ -224,6 +228,27 @@ app.post('/login', localStrategyAuth, (req, res, next) => {
     }, TOKEN_SECRET);
 
     res.status(200).contentType('application/json').json({ message: `Login at ${new Date()}`, token: token, token_type: 'Bearer' });
+});
+
+app.get('/transactions/:username', (req, res, next) => {
+    const username = req.params.username;
+    console.info('=> Received username ', username);
+
+    mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
+        .find({ username: username })
+        .toArray()
+        .then(result => {
+            console.info('=> Mongo find result: ', result);
+            if(result != null && result.length > 0) {
+                res.status(200).contentType('application/json').json({ data: result[0] });
+            } else {
+                res.status(200).contentType('application/json').json({ data: {} });
+            }
+        })
+        .catch(e => {
+            console.error('=> Error while updating mongo: ', e);
+            res.status(500).contentType('application/json').json({ error: 'Unable to retrieve data from MongoDB' });
+        });
 });
 
 app.post('/createprofile', (req, res, next) => {
@@ -320,6 +345,37 @@ app.post('/verify', async (req, res, next) => {
     } else {
         res.status(500).contentType('application/json').json({ message: "A hash is require to verify a user. Please try again." });
     }
+});
+
+app.ws('/connect', (ws, req) => {
+    const username = req.query.username;
+    console.info(`New websocket connection: ${username}`);
+    // add the web socket connection to the WSCONN object
+    ws.participantName = username;
+    WSCONN[username] = ws;
+    console.info('=> Completed storing WebSocket in WSCONN');
+
+    // setup -> for chat messages
+    ws.on('message', (payload) => {
+        console.info('=> payload: ', payload);
+        const chat = JSON.stringify({
+            from: username,
+            message: payload,
+            timestamp: (new Date()).toString()
+        });
+        for (let person in WSCONN) {
+            WSCONN[person].send(chat);
+        }
+    });
+
+    ws.on('close', () => {
+        console.info(`Closing websocket connection for ${username}`);
+        // close our end of the connection
+        WSCONN[username].close();
+        // remove ownself from the WSCONN object
+        delete WSCONN[username];
+        console.info('=> close WSCONN: ', username);
+    });
 });
 
 app.use(express.static(__dirname + "/public"));

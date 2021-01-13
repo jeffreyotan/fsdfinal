@@ -1,6 +1,8 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from "@angular/router";
+import { Subject } from "rxjs";
+import { BaseMessage } from "./messages";
 import { UserRegistrationData, UserProfileData } from "./models";
 
 @Injectable()
@@ -9,9 +11,15 @@ export class WebService implements CanActivate {
     verifyUrl: string = '/verify';
     loginUrl: string = '/login';
     createProfileUrl: string = '/createprofile';
+    retrieveTransactionsUrl: string = '/transactions';
+
+    event = new Subject<BaseMessage>();
 
     private token = '';
+    private activeUser = '';
     private isFirstUse = true;
+
+    private sock: WebSocket = null;
 
     constructor(private http: HttpClient, private router: Router) { }
 
@@ -54,12 +62,13 @@ export class WebService implements CanActivate {
     }
 
     login(username: string, password: string) {
-        this.token = '';
+        this.logout();
         return this.http.post<any>(this.loginUrl, { username, password }, {observe: 'response'}).toPromise()
             .then(res => {
                 console.info('-> res: ', res);
                 if(res.status === 200) {
                     this.token = res.body.token;
+                    this.activeUser = username;
                 }
                 return true;
             })
@@ -78,6 +87,8 @@ export class WebService implements CanActivate {
 
     logout() {
         this.token = '';
+        this.activeUser = '';
+        this.leave();
     }
 
     createUserProfile(userData: UserProfileData) {
@@ -103,6 +114,43 @@ export class WebService implements CanActivate {
                 }
                 return false;
             });
+    }
+
+    retrieveTransactions() {
+        return this.http.get<any>(this.retrieveTransactionsUrl + '/' + this.activeUser).toPromise();
+    }
+
+    join(username: string) {
+        const params = new HttpParams().set('username', username);
+        const url = `ws://localhost:3000/connect?${params.toString()}`;
+        this.sock = new WebSocket(url);
+
+        console.info(`-> Created WebSocket to ${url}`);
+        // handle incoming messages
+        this.sock.onmessage = (payload: MessageEvent) => {
+            // parse the string to ChatMessage
+            const msg = JSON.parse(payload.data) as BaseMessage;
+            this.event.next(msg);
+        };
+
+        // handle accidental socket closure
+        this.sock.onclose = () => {
+            console.info('-> in function join.onclose with sock: ', this.sock);
+            if(this.sock != null) {
+                this.sock.close();
+                this.sock = null;
+            }
+        };
+    }
+
+    leave() {
+        console.info('-> Closing the WebSocket');
+        if(this.sock != null) {
+            console.info('-> Performing this.sock.close()');
+            this.sock.close();
+            this.sock = null;
+            console.info('-> Completed this.sock.close()');
+        }
     }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
