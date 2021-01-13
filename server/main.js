@@ -322,5 +322,7 @@ app.post('/verify', async (req, res, next) => {
     }
 });
 
+app.use(express.static(__dirname + "/public"));
+
 // start the express server
 startApp(app, pool);
