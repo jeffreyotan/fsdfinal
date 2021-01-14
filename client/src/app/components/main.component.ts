@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UserProfileData } from '../models';
+import { TransactionData, UserProfileData, UserSummary } from '../models';
 import { WebService } from '../web.services';
 
 @Component({
@@ -16,7 +16,8 @@ export class MainComponent implements OnInit {
   isFirstTime: boolean;
   activeUser: string;
   activeUserProfile: UserProfileData;
-  activeUserAlloc: UserProfileData;
+  activeUserAlloc: UserSummary;
+  activeUserTransactions: TransactionData[] = [];
 
   constructor(private fb: FormBuilder, private router: Router, private webSvc: WebService) { }
 
@@ -28,22 +29,7 @@ export class MainComponent implements OnInit {
       donate: this.fb.control('10', [ Validators.required ]),
       invest: this.fb.control('10', [ Validators.required ])
     });
-    this.isFirstTime = true;
-    this.activeUser = '';
-    this.activeUserProfile = {
-      income: 0,
-      save: 0,
-      spend: 0,
-      donate: 0,
-      invest: 0
-    };
-    this.activeUserAlloc = {
-      income: 0,
-      save: 0,
-      spend: 0,
-      donate: 0,
-      invest: 0
-    };
+    this.resetValues();
     this.retrievePastTransactions();
   }
 
@@ -57,6 +43,12 @@ export class MainComponent implements OnInit {
           // we have a user profile as an empty object will be returned for a new user
           this.activeUserProfile = data["profile"];
           this.activeUser = data["username"];
+          const pastTransactions = data["transactions"];
+          if(pastTransactions != null && pastTransactions.length > 0) {
+            pastTransactions.forEach(element => {
+              this.activeUserTransactions.push(element);
+            });
+          }
           this.isFirstTime = false;
           console.info('-> userProfile: ', this.activeUserProfile);
         } else {
@@ -65,6 +57,20 @@ export class MainComponent implements OnInit {
       })
       .catch(e => {
         console.error('-> Error in retrieving transactions');
+      });
+
+    this.webSvc.retrieveSummary()
+      .then(results => {
+        const data = results['data'];
+        console.info('-> Summary received: ', data);
+        if(data != null && data.length > 0) {
+          for(let i=0; i<data.length; i++) {
+            this.activeUserAlloc[data[i]["_id"]] = data[i]["total"];
+          }
+        }
+      })
+      .catch(e => {
+        console.error('-> Error in retrieving summary');
       });
   }
 
@@ -94,10 +100,33 @@ export class MainComponent implements OnInit {
     this.router.navigate(['/add']);
   }
 
+  resetValues() {
+    this.isFirstTime = true;
+    this.activeUser = '';
+    this.activeUserProfile = {
+      income: 0,
+      save: 0,
+      spend: 0,
+      donate: 0,
+      invest: 0
+    };
+    this.activeUserAlloc = {
+      save: 0,
+      spend: 0,
+      donate: 0,
+      invest: 0
+    };
+    const arrayLength = this.activeUserTransactions.length;
+    if(arrayLength > 0) {
+      this.activeUserTransactions.splice(0, arrayLength);
+    }
+  }
+
   onClickClear() {
     this.webSvc.clearUserTransactions()
       .then(result => {
         console.info('-> Clear transactions ', result);
+        this.resetValues();
       })
       .catch(e => {
         console.error('-> Error while clearing ', e);

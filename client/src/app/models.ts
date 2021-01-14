@@ -11,3 +11,17 @@ export interface UserProfileData {
     donate: number,
     invest: number
 }
+
+export interface UserSummary {
+    save: number,
+    spend: number,
+    donate: number,
+    invest: number
+}
+
+export interface TransactionData {
+    title: string,
+    amount: number,
+    comments: string,
+    category: string
+}

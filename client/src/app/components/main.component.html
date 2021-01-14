@@ -78,10 +78,10 @@
     <div class="row">
         <div class="col">
             <h5><u>Allocation:</u></h5>
-            <p>Save: / {{(activeUserProfile.income*activeUserProfile.save/100).toFixed(2)}} ({{activeUserProfile.save.toFixed(1)}}%)</p>
-            <p>Spend: / {{(activeUserProfile.income*activeUserProfile.spend/100).toFixed(2)}} ({{activeUserProfile.spend.toFixed(1)}}%)</p>
-            <p>Donate: / {{(activeUserProfile.income*activeUserProfile.donate/100).toFixed(2)}} ({{activeUserProfile.donate.toFixed(1)}}%)</p>
-            <p>Invest: / {{(activeUserProfile.income*activeUserProfile.invest/100).toFixed(2)}} ({{activeUserProfile.invest.toFixed(1)}}%)</p>
+            <p>Save: {{activeUserAlloc.save.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.save/100).toFixed(2)}} ({{activeUserProfile.save.toFixed(1)}}%)</p>
+            <p>Spend: {{activeUserAlloc.spend.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.spend/100).toFixed(2)}} ({{activeUserProfile.spend.toFixed(1)}}%)</p>
+            <p>Donate: {{activeUserAlloc.donate.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.donate/100).toFixed(2)}} ({{activeUserProfile.donate.toFixed(1)}}%)</p>
+            <p>Invest: {{activeUserAlloc.invest.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.invest/100).toFixed(2)}} ({{activeUserProfile.invest.toFixed(1)}}%)</p>
         </div>
     </div>
     <div class="row mt-2">

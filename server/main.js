@@ -5,6 +5,12 @@ const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 const expressWS = require('express-ws');
 
+// load libraries for S3
+const multer = require('multer');
+const AWS = require('aws-sdk');
+const path = require('path');
+const fs = require('fs');
+
 // libraries for mongodb
 const ObjectId = require('mongodb').ObjectId;
 const MongoClient = require('mongodb').MongoClient;
@@ -64,6 +70,18 @@ const getUserHash = makeQuery(SQL_QUERY_GET_HASH, pool);
 const getUserIDFromHash = makeQuery(SQL_QUERY_GET_USER_ID_FROM_HASH, pool);
 const setUserVerified = makeQuery(SQL_QUERY_SET_USER_VERIFIED, pool);
 
+// define any S3 cloud persistance storage settings
+const multipart = multer({
+    dest: process.env.TMP_DIR || path.join(__dirname, "/uploads/")
+});
+const cloudEP = process.env.CLOUD_ENDPOINT;
+const endpoint = new AWS.Endpoint(cloudEP);
+const s3 = new AWS.S3({
+    endpoint: endpoint,
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY
+});
+
 // create an instance of the mongodb client and define database-specific constants
 const mongoClient = new MongoClient(MONGO_URL, {
     useNewUrlParser: true,
@@ -81,7 +99,8 @@ const makeUserProfileData = (userdata) => {
             spend: userdata.spend,
             donate: userdata.donate,
             invest: userdata.invest
-        }
+        },
+        transactions: []
     }
 }
 
@@ -99,11 +118,22 @@ const startApp = async (newApp, newPool) => {
         // Otherwise, it is safe to assume that the connection was successful.
         conn.release();
 
-        console.info('We are connecting to the MongoDB..');
-        await mongoClient.connect();
+        console.info('We are connecting to S3 and MongoDB..');
+        const p0 = new Promise((resolve, reject) => {
+            if((!!process.env.ACCESS_KEY) && (!!process.env.SECRET_ACCESS_KEY)) {
+                resolve();
+            } else {
+                reject('S3 Keys are not found');
+            }
+        });
+        const p1 = mongoClient.connect();
 
-        newApp.listen(PORT, () => {
-            console.info(`Server start at port ${PORT} on ${new Date()}`);
+        Promise.all([p0, p1]).then(() => {
+            newApp.listen(PORT, () => {
+                console.info(`Server start at port ${PORT} on ${new Date()}`);
+            });
+        }).catch(e => {
+            console.error('=> Unable to establish a connection to the MongoDB server: ', e);
         });
     } catch (e) {
         console.error('=> Unable to establish a connection to the database!', e);
@@ -230,6 +260,40 @@ app.post('/login', localStrategyAuth, (req, res, next) => {
     res.status(200).contentType('application/json').json({ message: `Login at ${new Date()}`, token: token, token_type: 'Bearer' });
 });
 
+app.get('/summary/:username', (req, res, next) => {
+    const username = req.params.username;
+    console.info('=> Received username ', username);
+
+    mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
+        .aggregate([
+            {
+                $match: { username: username }
+            },
+            {
+                $unwind: "$transactions"
+            },
+            {
+                $group: {
+                    _id: "$transactions.category",
+                    total: { $sum: "$transactions.amount" }
+                }
+            }
+        ])
+        .toArray()
+        .then(result => {
+            console.info('=> Mongo find result: ', result);
+            if(result != null && result.length > 0) {
+                res.status(200).contentType('application/json').json({ data: result });
+            } else {
+                res.status(200).contentType('application/json').json({ data: {} });
+            }
+        })
+        .catch(e => {
+            console.error('=> Error while updating mongo: ', e);
+            res.status(500).contentType('application/json').json({ error: 'Unable to retrieve data from MongoDB' });
+        });
+});
+
 app.get('/transactions/:username', (req, res, next) => {
     const username = req.params.username;
     console.info('=> Received username ', username);
@@ -287,6 +351,55 @@ app.post('/createprofile', (req, res, next) => {
         .catch(e => {
             console.error('=> Error while creating profile in mongo: ', e);
             res.status(500).contentType('application/json').json({ error: 'Failed while creating profile to mongo' });
+        });
+});
+
+app.post('/record', (req, res, next) => {
+    // check if the request has Authorization header
+    const auth = req.get('Authorization');
+    if (auth == null) {
+        res.status(401).contentType('application/json').json({ message: 'Cannot access' });
+        return;
+    }
+    // bearer authorization
+    const terms = auth.split(' ');
+    if ((terms.length != 2) || (terms[0] != 'Bearer')) {
+        res.status(401).contentType('application/json').json({ message: 'incorrect Authorization' });
+        return;
+    }
+    const token = terms[1];
+    try {
+        const verified = jwt.verify(token, TOKEN_SECRET);
+        console.info("Verified token: ", verified);
+        req.token = verified;
+        next();
+    } catch (e) {
+        res.status(403).contentType('application/json').json({ message: "Incorrect token", error: e});
+    }
+}, (req, res, next) => {
+
+    const username = req.token.sub;
+    const body = req.body;
+    console.info('=> in /record with body:', JSON.stringify(body));
+
+    const doc = {
+        title: body['title'] || '',
+        amount: body['amount'] || 0,
+        comments: body['comments'] || '',
+        category: body['category'] || ''
+    };
+    mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
+        .updateOne(
+            { username: username },
+            { $push: { transactions: doc }}
+        )
+        .then(result => {
+            console.info('=> Successfully updated transaction in mongo:', result.result);
+            res.status(200).contentType('application/json').json({ message: 'Transaction added to user' });
+        })
+        .catch(e => {
+            console.error('=> Error while creating profile in mongo: ', e);
+            res.status(500).contentType('application/json').json({ error: 'Failed while adding transaction to mongo' });
         });
 });
 

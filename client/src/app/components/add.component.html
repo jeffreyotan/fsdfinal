@@ -1,10 +1,10 @@
-<form class="m-3">
+<form class="m-3" [formGroup]="form">
     <div class="row">
         <div class="col-2">
             <label for="title">Title:</label>
         </div>
         <div class="col">
-            <input type="text" id="title" size="45">
+            <input type="text" id="title" size="45" formControlName="title">
         </div>
     </div>
     <div class="row">
@@ -13,7 +13,41 @@
         </div>
         <div class="col">
             <span>$</span>
-            <input type="text" id="amount" size="20">
+            <input type="text" id="amount" size="20" formControlName="amount">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="comments">Comments:</label>
+        </div>
+        <div class="col">
+            <textarea id="comments" cols="30" rows="7" placeholder="Additional details" formControlName="comments"></textarea>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-2">
+            <label for="category">Category:</label>
+        </div>
+        <div class="col">
+            <select class="form-select" aria-label="category selection" formControlName="category">
+                <option value="save">Save</option>
+                <option value="spend">Spend</option>
+                <option value="donate">Donate</option>
+                <option value="invest">Invest</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-2"></div>
+        <div class="col">
+            <button type="button" class="btn btn-primary" [disabled]="form.invalid" (click)="onClickSubmit()">Submit</button>
+            &nbsp;|&nbsp;
+            <button type="button" class="btn btn-primary" (click)="onClickBack()">Back</button>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <h5>{{status}}</h5>
         </div>
     </div>
 </form>

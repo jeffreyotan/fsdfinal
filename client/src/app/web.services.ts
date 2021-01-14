@@ -11,8 +11,10 @@ export class WebService implements CanActivate {
     verifyUrl: string = '/verify';
     loginUrl: string = '/login';
     createProfileUrl: string = '/createprofile';
+    retrieveSummaryUrl: string = '/summary';
     retrieveTransactionsUrl: string = '/transactions';
     clearTransactionsUrl: string = '/clear';
+    addTransactionUrl: string = '/record';
 
     event = new Subject<BaseMessage>();
 
@@ -117,8 +119,22 @@ export class WebService implements CanActivate {
             });
     }
 
+    retrieveSummary() {
+        return this.http.get<any>(this.retrieveSummaryUrl + '/' + this.activeUser).toPromise();
+    }
+
     retrieveTransactions() {
         return this.http.get<any>(this.retrieveTransactionsUrl + '/' + this.activeUser).toPromise();
+    }
+
+    async addNewTransaction(data) {
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Authorization': 'Bearer ' + this.token,
+                'Content-Type': 'application/json'
+            })
+        };
+        return await this.http.post<any>(this.addTransactionUrl, data, httpOptions).toPromise();
     }
 
     clearUserTransactions() {
