@@ -63,6 +63,7 @@ SQL_QUERY_NEW_USER_ADD = "insert into users(email, username, password, hash) val
 SQL_QUERY_GET_HASH = "select hash from users where email = ?";
 SQL_QUERY_GET_USER_ID_FROM_HASH = "select user_id from users where hash like ?";
 SQL_QUERY_SET_USER_VERIFIED = "update users set is_verified = TRUE, hash = NULL where user_id = ?";
+SQL_QUERY_DELETE_USER = "delete from users where username like ?";
 
 const queryUser = makeQuery(SQL_QUERY_USER_INFO, pool);
 const addNewUser = makeQuery(SQL_QUERY_NEW_USER_ADD, pool);
@@ -494,6 +495,64 @@ app.post('/verify', async (req, res, next) => {
         }
     } else {
         res.status(500).contentType('application/json').json({ message: "A hash is require to verify a user. Please try again." });
+    }
+});
+
+app.post('/deregister/:username', (req, res, next) => {
+    // check if the request has Authorization header
+    const auth = req.get('Authorization');
+    if (auth == null) {
+        res.status(401).contentType('application/json').json({ message: 'Cannot access' });
+        return;
+    }
+    // bearer authorization
+    const terms = auth.split(' ');
+    if ((terms.length != 2) || (terms[0] != 'Bearer')) {
+        res.status(401).contentType('application/json').json({ message: 'incorrect Authorization' });
+        return;
+    }
+    const token = terms[1];
+    try {
+        const verified = jwt.verify(token, TOKEN_SECRET);
+        console.info("Verified token: ", verified);
+        req.token = verified;
+        next();
+    } catch (e) {
+        res.status(403).contentType('application/json').json({ message: "Incorrect token", error: e});
+    }
+}, async (req, res, next) => {
+    const username = req.params["username"];
+    console.info('=> deregistering username: ', username);
+    const conn = await pool.getConnection();
+    // const session = mongoClient.startSession(); // do note that MongoDB does not support Transactions for Standalone servers: https://github.com/p-mongo/mongodb-faq#transaction-support
+    try {
+        await conn.beginTransaction();
+        /* Not needed as MongoDB does not support Transactions for Standalone servers
+        const transactionOptions = {
+            readPreference: 'primary',
+            readConcern: { level: 'local' },
+            writeConcern: { w: 'majority' }
+        };
+        session.startTransaction(transactionOptions); */
+
+        console.info(`=> beginning SQL deregistration for ${username}`);
+        const results = await conn.query(SQL_QUERY_DELETE_USER, [ username ]);
+        console.info(`=> beginning Mongo deregistration for ${username}`);
+        const mgResults = await mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME).deleteMany({ username: username }/*, { session }*/);
+
+        console.info('=> Completed SQL query with results ', results[0]);
+        console.info('=> Completed Mongo query with results ', mgResults.result);
+        // await session.commitTransaction();
+        await conn.commit();
+        res.status(200).contentType('application/json').json({ message: `User ${username} was deregistered` });
+    } catch (e) {
+        console.error(`=> An error occurred during deregistering user ${username}.. rolling back transactions`, e);
+        // session.abortTransaction();
+        conn.rollback();
+        res.status(500).contentType('application/json').json({ error: `Failed while deregistering user ${username}` });
+    } finally {
+        // session.endSession();
+        conn.release();
     }
 });
 

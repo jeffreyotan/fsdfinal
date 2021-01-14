@@ -14,6 +14,7 @@ export class WebService implements CanActivate {
     retrieveSummaryUrl: string = '/summary';
     retrieveTransactionsUrl: string = '/transactions';
     clearTransactionsUrl: string = '/clear';
+    deregisterUserUrl: string = '/deregister';
     addTransactionUrl: string = '/record';
 
     event = new Subject<BaseMessage>();
@@ -145,6 +146,27 @@ export class WebService implements CanActivate {
             })
         };
         return this.http.post<any>(this.clearTransactionsUrl, { username: this.activeUser }, httpOptions).toPromise();
+    }
+
+    deregisterUser() {
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Authorization': 'Bearer ' + this.token,
+                'Content-Type': 'application/json'
+            })
+        };
+        return this.http.post<any>(this.deregisterUserUrl + '/' + this.activeUser, { username: this.activeUser }, httpOptions).toPromise()
+            .then(results => {
+                console.info('-> deregisterUser successful: ', results);
+                if(results.status === 200) {
+                    this.logout();
+                }
+                return true;
+            })
+            .catch(e => {
+                console.error('-> deregisterUser failed: ', e);
+                return false;
+            });
     }
 
     join(username: string) {

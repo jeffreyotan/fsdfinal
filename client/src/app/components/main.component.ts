@@ -152,4 +152,18 @@ export class MainComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
+  onClickDeregister() {
+    this.webSvc.deregisterUser()
+      .then(results => {
+        if(results) {
+          this.router.navigate(['/']);
+        } else {
+          alert("Deregistration of user failed!");
+        }
+      })
+      .catch(e => {
+        alert("Deregistration of user failed!");
+      });
+  }
+
 }
