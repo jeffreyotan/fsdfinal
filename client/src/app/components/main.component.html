@@ -1,98 +1,118 @@
-<form class="m-3" [formGroup]="mainForm" *ngIf="isFirstTime">
+<div class="m-3" *ngIf="!isShowDetails">
+    <form class="m-3" [formGroup]="mainForm" *ngIf="isFirstTime">
+        <div class="row">
+            <div class="col-4">
+                <label for="income">How much do you earn?</label>
+            </div>
+            <div class="col">
+                <span>$</span>
+                <input type="text" id="income" size="20" formControlName="income" #baseIncome>
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col">
+                <h5>Allocation:</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <label for="save">Save</label>
+            </div>
+            <div class="col">
+                <input type="text" id="save" size="10" formControlName="save" #saveAmt>
+                <span>%</span>
+                &nbsp;|&nbsp;
+                <span>{{ (baseIncome.value*saveAmt.value/100).toFixed(2) }}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <label for="spend">Spend</label>
+            </div>
+            <div class="col">
+                <input type="text" id="spend" size="10" formControlName="spend" #spendAmt>
+                <span>%</span>
+                &nbsp;|&nbsp;
+                <span>{{ (baseIncome.value*spendAmt.value/100).toFixed(2) }}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <label for="donate">Donate</label>
+            </div>
+            <div class="col">
+                <input type="text" id="donate" size="10" formControlName="donate" #donateAmt>
+                <span>%</span>
+                &nbsp;|&nbsp;
+                <span>{{ (baseIncome.value*donateAmt.value/100).toFixed(2) }}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <label for="invest">Invest</label>
+            </div>
+            <div class="col">
+                <input type="text" id="Invest" size="10" formControlName="invest" #investAmt>
+                <span>%</span>
+                &nbsp;|&nbsp;
+                <span>{{ (baseIncome.value*investAmt.value/100).toFixed(2) }}</span>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col">
+                <button type="button" class="btn btn-primary" [disabled]="mainForm.invalid" (click)="onClickSubmit()">Submit</button>
+            </div>
+        </div>
+    </form>
+    <div class="m-3" *ngIf="!isFirstTime">
+        <div class="row">
+            <div class="col">
+                <h4>User Profile: {{activeUser}}</h4>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col">
+                <h5><u>Budgeted:</u></h5>
+                <p>Income: ${{activeUserProfile.income.toFixed(2)}}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h5><u>Allocation:</u></h5>
+                <p>Save: {{activeUserAlloc.save.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.save/100).toFixed(2)}} ({{activeUserProfile.save.toFixed(1)}}%)</p>
+                <p>Spend: {{activeUserAlloc.spend.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.spend/100).toFixed(2)}} ({{activeUserProfile.spend.toFixed(1)}}%)</p>
+                <p>Donate: {{activeUserAlloc.donate.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.donate/100).toFixed(2)}} ({{activeUserProfile.donate.toFixed(1)}}%)</p>
+                <p>Invest: {{activeUserAlloc.invest.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.invest/100).toFixed(2)}} ({{activeUserProfile.invest.toFixed(1)}}%)</p>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col">
+                <button type="button" class="btn btn-primary" (click)="onClickDetails()">Details</button>
+                &nbsp;|&nbsp;
+                <button type="button" class="btn btn-primary" (click)="onClickAdd()">Add</button>
+                &nbsp;|&nbsp;
+                <button type="button" class="btn btn-primary" (click)="onClickClear()">Clear</button>
+                &nbsp;|&nbsp;
+                <button type="button" class="btn btn-primary" (click)="onClickLogout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="m-3" *ngIf="isShowDetails">
     <div class="row">
-        <div class="col-4">
-            <label for="income">How much do you earn?</label>
-        </div>
         <div class="col">
-            <span>$</span>
-            <input type="text" id="income" size="20" formControlName="income" #baseIncome>
-        </div>
-    </div>
-    <div class="row my-2">
-        <div class="col">
-            <h5>Allocation:</h5>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-4">
-            <label for="save">Save</label>
-        </div>
-        <div class="col">
-            <input type="text" id="save" size="10" formControlName="save" #saveAmt>
-            <span>%</span>
+            <span style="font-size: larger;"><strong>Past Transactions</strong></span>
             &nbsp;|&nbsp;
-            <span>{{ (baseIncome.value*saveAmt.value/100).toFixed(2) }}</span>
+            <button type="button" class="btn btn-primary" (click)="onClickDetails()">Summary</button>
         </div>
     </div>
-    <div class="row">
-        <div class="col-4">
-            <label for="spend">Spend</label>
-        </div>
+    <div class="row mt-2" *ngFor="let t of activeUserTransactions">
         <div class="col">
-            <input type="text" id="spend" size="10" formControlName="spend" #spendAmt>
-            <span>%</span>
-            &nbsp;|&nbsp;
-            <span>{{ (baseIncome.value*spendAmt.value/100).toFixed(2) }}</span>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-4">
-            <label for="donate">Donate</label>
-        </div>
-        <div class="col">
-            <input type="text" id="donate" size="10" formControlName="donate" #donateAmt>
-            <span>%</span>
-            &nbsp;|&nbsp;
-            <span>{{ (baseIncome.value*donateAmt.value/100).toFixed(2) }}</span>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-4">
-            <label for="invest">Invest</label>
-        </div>
-        <div class="col">
-            <input type="text" id="Invest" size="10" formControlName="invest" #investAmt>
-            <span>%</span>
-            &nbsp;|&nbsp;
-            <span>{{ (baseIncome.value*investAmt.value/100).toFixed(2) }}</span>
-        </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col">
-            <button type="button" class="btn btn-primary" [disabled]="mainForm.invalid" (click)="onClickSubmit()">Submit</button>
-        </div>
-    </div>
-</form>
-<div class="m-3" *ngIf="!isFirstTime">
-    <div class="row">
-        <div class="col">
-            <h4>User Profile: {{activeUser}}</h4>
-        </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col">
-            <h5><u>Budgeted:</u></h5>
-            <p>Income: ${{activeUserProfile.income.toFixed(2)}}</p>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            <h5><u>Allocation:</u></h5>
-            <p>Save: {{activeUserAlloc.save.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.save/100).toFixed(2)}} ({{activeUserProfile.save.toFixed(1)}}%)</p>
-            <p>Spend: {{activeUserAlloc.spend.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.spend/100).toFixed(2)}} ({{activeUserProfile.spend.toFixed(1)}}%)</p>
-            <p>Donate: {{activeUserAlloc.donate.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.donate/100).toFixed(2)}} ({{activeUserProfile.donate.toFixed(1)}}%)</p>
-            <p>Invest: {{activeUserAlloc.invest.toFixed(2)}} / {{(activeUserProfile.income*activeUserProfile.invest/100).toFixed(2)}} ({{activeUserProfile.invest.toFixed(1)}}%)</p>
-        </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col">
-            <button type="button" class="btn btn-primary" (click)="onClickDetails()">Details</button>
-            &nbsp;|&nbsp;
-            <button type="button" class="btn btn-primary" (click)="onClickAdd()">Add</button>
-            &nbsp;|&nbsp;
-            <button type="button" class="btn btn-primary" (click)="onClickClear()">Clear</button>
-            &nbsp;|&nbsp;
-            <button type="button" class="btn btn-primary" (click)="onClickLogout()">Logout</button>
+            <hr>
+            <p>Title: {{t.title}}</p>
+            <p>Amount: {{t.amount.toFixed(2)}}</p>
+            <p>Comments: {{t.comments}}</p>
+            <p>Category: {{t.category}}</p>
         </div>
     </div>
 </div>

@@ -19,6 +19,9 @@ export class MainComponent implements OnInit {
   activeUserAlloc: UserSummary;
   activeUserTransactions: TransactionData[] = [];
 
+  isShowDetails: boolean;
+  detailsButtonWords: string;
+
   constructor(private fb: FormBuilder, private router: Router, private webSvc: WebService) { }
 
   ngOnInit(): void {
@@ -94,7 +97,16 @@ export class MainComponent implements OnInit {
     });
   }
 
-  onClickDetails() {}
+  onClickDetails() {
+    // console.info(`-> ${this.detailsButtonWords} was pressed`);
+    this.isShowDetails = !(this.isShowDetails);
+    // console.info(`-> New isShowDetails: ${this.isShowDetails}`);
+    if(this.isShowDetails) {
+      this.detailsButtonWords = "Summary";
+    } else {
+      this.detailsButtonWords = "Details";
+    }
+  }
 
   onClickAdd() {
     this.router.navigate(['/add']);
@@ -120,6 +132,8 @@ export class MainComponent implements OnInit {
     if(arrayLength > 0) {
       this.activeUserTransactions.splice(0, arrayLength);
     }
+    this.isShowDetails = false;
+    this.detailsButtonWords = "Details";
   }
 
   onClickClear() {
