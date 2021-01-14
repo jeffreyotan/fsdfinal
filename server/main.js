@@ -281,12 +281,49 @@ app.post('/createprofile', (req, res, next) => {
     mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
         .insertOne(doc)
         .then(result => {
-            console.info('=> Successfully uploaded to mongo');
+            console.info('=> Successfully created profile in mongo');
             res.status(200).contentType('application/json').json({ message: 'User profile created' });
         })
         .catch(e => {
+            console.error('=> Error while creating profile in mongo: ', e);
+            res.status(500).contentType('application/json').json({ error: 'Failed while creating profile to mongo' });
+        });
+});
+
+app.post('/clear', (req, res, next) => {
+    // check if the request has Authorization header
+    const auth = req.get('Authorization');
+    if (auth == null) {
+        res.status(401).contentType('application/json').json({ message: 'Cannot access' });
+        return;
+    }
+    // bearer authorization
+    const terms = auth.split(' ');
+    if ((terms.length != 2) || (terms[0] != 'Bearer')) {
+        res.status(401).contentType('application/json').json({ message: 'incorrect Authorization' });
+        return;
+    }
+    const token = terms[1];
+    try {
+        const verified = jwt.verify(token, TOKEN_SECRET);
+        console.info("Verified token: ", verified);
+        req.token = verified;
+        next();
+    } catch (e) {
+        res.status(403).contentType('application/json').json({ message: "Incorrect token", error: e});
+    }
+}, (req, res, next) => {
+    const username = req.body["username"];
+    console.info('=> clear username: ', username);
+    mongoClient.db(MONGO_DB_NAME).collection(MONGO_COLLECTION_NAME)
+        .deleteMany({ username: username })
+        .then(result => {
+            console.info('=> Successfully cleared user transactions in mongo', result.result);
+            res.status(200).contentType('application/json').json({ message: 'User transactions cleared' });
+        })
+        .catch(e => {
             console.error('=> Error while updating mongo: ', e);
-            res.status(500).contentType('application/json').json({ error: 'Failed while uploading to mongo' });
+            res.status(500).contentType('application/json').json({ error: 'Failed while clearing transactions in mongo' });
         });
 });
 

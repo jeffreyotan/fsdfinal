@@ -10,6 +10,7 @@ import { RegisterComponent } from './components/register.component';
 import { WebService } from './web.services';
 import { ErrorComponent } from './components/error.component';
 import { MainComponent } from './components/main.component';
+import { AddComponent } from './components/add.component';
 
 const ROUTES: Routes = [
   { path: "", component: LoginComponent },
@@ -17,6 +18,7 @@ const ROUTES: Routes = [
   { path: "error", component: ErrorComponent },
   { path: "register", component: RegisterComponent },
   { path: "main", component: MainComponent, canActivate: [WebService] },
+  { path: "add", component: AddComponent, canActivate: [WebService] },
   { path: "**", redirectTo: "/", pathMatch: "full"}
 ];
 
@@ -26,7 +28,8 @@ const ROUTES: Routes = [
     LoginComponent,
     RegisterComponent,
     ErrorComponent,
-    MainComponent
+    MainComponent,
+    AddComponent
   ],
   imports: [
     BrowserModule,

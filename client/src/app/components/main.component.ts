@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { UserProfileData } from '../models';
 import { WebService } from '../web.services';
 
@@ -13,8 +14,11 @@ export class MainComponent implements OnInit {
   mainForm: FormGroup;
 
   isFirstTime: boolean;
+  activeUser: string;
+  activeUserProfile: UserProfileData;
+  activeUserAlloc: UserProfileData;
 
-  constructor(private fb: FormBuilder, private webSvc: WebService) { }
+  constructor(private fb: FormBuilder, private router: Router, private webSvc: WebService) { }
 
   ngOnInit(): void {
     this.mainForm = this.fb.group({
@@ -25,7 +29,22 @@ export class MainComponent implements OnInit {
       invest: this.fb.control('10', [ Validators.required ])
     });
     this.isFirstTime = true;
-    this.retrievePastTransactions()
+    this.activeUser = '';
+    this.activeUserProfile = {
+      income: 0,
+      save: 0,
+      spend: 0,
+      donate: 0,
+      invest: 0
+    };
+    this.activeUserAlloc = {
+      income: 0,
+      save: 0,
+      spend: 0,
+      donate: 0,
+      invest: 0
+    };
+    this.retrievePastTransactions();
   }
 
   retrievePastTransactions() {
@@ -33,11 +52,15 @@ export class MainComponent implements OnInit {
       .then(results => {
         const data = results['data'];
         console.info('-> Transactions received: ', data);
-        console.info('-> Peeking at data.username: ', data.username);
-        if(data["username"] != null) {
+        // console.info('-> Peeking at data.username: ', data.username);
+        if(data != null && data["username"] != null) {
           // we have a user profile as an empty object will be returned for a new user
-          const userProfile: UserProfileData = data["profile"];
-          console.info('-> userProfile: ', userProfile);
+          this.activeUserProfile = data["profile"];
+          this.activeUser = data["username"];
+          this.isFirstTime = false;
+          console.info('-> userProfile: ', this.activeUserProfile);
+        } else {
+          // no user profile retrieve.. just ignore
         }
       })
       .catch(e => {
@@ -63,6 +86,27 @@ export class MainComponent implements OnInit {
     .catch(e => {
       console.error('-> Create User Profile failed with error ', e);
     });
+  }
+
+  onClickDetails() {}
+
+  onClickAdd() {
+    this.router.navigate(['/add']);
+  }
+
+  onClickClear() {
+    this.webSvc.clearUserTransactions()
+      .then(result => {
+        console.info('-> Clear transactions ', result);
+      })
+      .catch(e => {
+        console.error('-> Error while clearing ', e);
+      });
+  }
+
+  onClickLogout() {
+    this.webSvc.logout();
+    this.router.navigate(['/']);
   }
 
 }

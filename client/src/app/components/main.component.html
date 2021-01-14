@@ -63,3 +63,36 @@
         </div>
     </div>
 </form>
+<div class="m-3" *ngIf="!isFirstTime">
+    <div class="row">
+        <div class="col">
+            <h4>User Profile: {{activeUser}}</h4>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col">
+            <h5><u>Budgeted:</u></h5>
+            <p>Income: ${{activeUserProfile.income.toFixed(2)}}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h5><u>Allocation:</u></h5>
+            <p>Save: / {{(activeUserProfile.income*activeUserProfile.save/100).toFixed(2)}} ({{activeUserProfile.save.toFixed(1)}}%)</p>
+            <p>Spend: / {{(activeUserProfile.income*activeUserProfile.spend/100).toFixed(2)}} ({{activeUserProfile.spend.toFixed(1)}}%)</p>
+            <p>Donate: / {{(activeUserProfile.income*activeUserProfile.donate/100).toFixed(2)}} ({{activeUserProfile.donate.toFixed(1)}}%)</p>
+            <p>Invest: / {{(activeUserProfile.income*activeUserProfile.invest/100).toFixed(2)}} ({{activeUserProfile.invest.toFixed(1)}}%)</p>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col">
+            <button type="button" class="btn btn-primary" (click)="onClickDetails()">Details</button>
+            &nbsp;|&nbsp;
+            <button type="button" class="btn btn-primary" (click)="onClickAdd()">Add</button>
+            &nbsp;|&nbsp;
+            <button type="button" class="btn btn-primary" (click)="onClickClear()">Clear</button>
+            &nbsp;|&nbsp;
+            <button type="button" class="btn btn-primary" (click)="onClickLogout()">Logout</button>
+        </div>
+    </div>
+</div>

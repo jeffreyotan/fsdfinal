@@ -12,6 +12,7 @@ export class WebService implements CanActivate {
     loginUrl: string = '/login';
     createProfileUrl: string = '/createprofile';
     retrieveTransactionsUrl: string = '/transactions';
+    clearTransactionsUrl: string = '/clear';
 
     event = new Subject<BaseMessage>();
 
@@ -118,6 +119,16 @@ export class WebService implements CanActivate {
 
     retrieveTransactions() {
         return this.http.get<any>(this.retrieveTransactionsUrl + '/' + this.activeUser).toPromise();
+    }
+
+    clearUserTransactions() {
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Authorization': 'Bearer ' + this.token,
+                'Content-Type': 'application/json'
+            })
+        };
+        return this.http.post<any>(this.clearTransactionsUrl, { username: this.activeUser }, httpOptions).toPromise();
     }
 
     join(username: string) {
